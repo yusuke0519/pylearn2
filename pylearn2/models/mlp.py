@@ -1261,6 +1261,21 @@ class Softmax(Layer):
                 rval['misclass'] = misclass
                 rval['nll'] = self.cost(Y_hat=state, Y=targets)
 
+                # Add 
+                y = T.cast(y, state.dtype)
+                y_hat = T.cast(y_hat, state.dtype)
+                tp = (y * y_hat).sum()
+                fp = ((1 - y) * y_hat).sum()
+
+                precision = compute_precision(tp, fp)
+                recall = compute_recall(y, tp)
+                f1 = compute_f1(precision, recall)
+
+                rval['precision'] = precision
+                rval['recall'] = recall
+                rval['f1'] = f1
+                # Add End
+
         return rval
 
     @wraps(Layer.set_input_space)

@@ -1261,20 +1261,20 @@ class Softmax(Layer):
                 rval['misclass'] = misclass
                 rval['nll'] = self.cost(Y_hat=state, Y=targets)
 
-                # Add 
-                y = T.cast(y, state.dtype)
-                y_hat = T.cast(y_hat, state.dtype)
-                tp = (y * y_hat).sum()
-                fp = ((1 - y) * y_hat).sum()
+                # # Add 
+                # y = T.cast(y, state.dtype)
+                # y_hat = T.cast(y_hat, state.dtype)
+                # tp = (y * y_hat).sum()
+                # fp = ((1 - y) * y_hat).sum()
 
-                precision = compute_precision(tp, fp)
-                recall = compute_recall(y, tp)
-                f1 = compute_f1(precision, recall)
+                # precision = compute_precision(tp, fp)
+                # recall = compute_recall(y, tp)
+                # f1 = compute_f1(precision, recall)
 
-                rval['precision'] = precision
-                rval['recall'] = recall
-                rval['f1'] = f1
-                # Add End
+                # rval['precision'] = precision
+                # rval['recall'] = recall
+                # rval['f1'] = f1
+                # # Add End
 
         return rval
 
@@ -2469,7 +2469,6 @@ class Sigmoid(Linear):
 
         rval = super(Sigmoid, self).get_layer_monitoring_channels(
             state=state, targets=targets)
-
         if (targets is not None) and \
                 ((state_below is not None) or (state is not None)):
             if state is None:

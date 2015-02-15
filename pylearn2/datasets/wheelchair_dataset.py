@@ -169,18 +169,7 @@ class Wheelchair2012(DenseDesignMatrix):
 
         X, y = take_subset(X, y)
         y = y.astype('int32')
-        n_class = len(np.unique(y))
-        from pylearn2.format.target_format import OneHotFormatter
-        y = OneHotFormatter(max_labels=n_class, dtype='int32').format(y.reshape([len(y)]))
-        # one_hot = np.zeros(( y.shape[0], n_class), dtype='int32' )
-        # for i in xrange( y.shape[0] ):
-        #     label = y[i]
-        # 
-        #     # a version for two classes
-        #     if label == 1:
-        #         one_hot[i,1] = 1.
-        #     else:
-        #         one_hot[i,0] = 1.
-        # 
-        # y = one_hot
+        # from pylearn2.format.target_format import OneHotFormatter
+        # n_class = len(np.unique(y))
+        # y = OneHotFormatter(max_labels=n_class, dtype='int32').format(y.reshape([len(y)]))
         return X, y

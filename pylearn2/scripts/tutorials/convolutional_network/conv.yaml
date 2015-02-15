@@ -34,7 +34,7 @@
                  }
                 ],
     },
-    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {z
         batch_size: %(batch_size)i,
         learning_rate: .01,
         learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {

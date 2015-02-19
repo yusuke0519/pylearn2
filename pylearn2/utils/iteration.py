@@ -575,6 +575,60 @@ class RandomSliceSubsetIterator(RandomUniformSubsetIterator):
     uniform_batch_size = True
 
 
+class BalancedRandomIterator(SubsetIterator):
+    def __init__(self, dataset_size, batch_size, num_batches, rng=None):
+        self._rng = make_np_rng(rng, which_method=["random_integers",
+                                                   "shuffle"])
+        if batch_size is None:
+            raise ValueError("batch_size cannot be None for random uniform "
+                             "iteration")
+        self._dataset_size = dataset_size
+        self._batch_size = batch_size
+        import math
+        self._num_batches = math.ceil(dataset_size/float(batch_size))
+        self._next_batch_no = 0
+        self._positive_ratio = 0.4
+
+    @wraps(SubsetIterator.next)
+    def next(self):
+        if self._next_batch_no >= self._num_batches:
+            raise StopIteration()
+        else:
+            self._next_batch_no += 1
+            y = self._dataset.y
+            p_batch_size = self.batch_size * self._positive_ratio
+
+            p = 1
+            n = 0
+            chice = np.arange(len(y))
+            p_choice = chice[(y == p).reshape(len(y))]
+            p_max_size = len(p_choice)
+            n_choice = chice[(y == n).reshape(len(y))]
+
+            import random
+            p_batch_size = int(min(p_batch_size, p_max_size))
+            p_ind = random.sample(p_choice, p_batch_size)
+
+            n_batch_size = self.batch_size - p_batch_size
+            n_ind = random.sample(n_choice, n_batch_size)
+
+            rval = np.concatenate([p_ind, n_ind])
+            random.shuffle(rval)
+            return rval
+
+    def __next__(self):
+        return self.next()
+
+    def set_dataset(self, dataset):
+        self._dataset = dataset
+
+    def set_positive_ratio(self, positive_ratio):
+        self._positive_ratio = positive_ratio
+    fancy = True
+    stochastic = True
+    uniform_batch_size = True
+
+
 class BatchwiseShuffledSequentialIterator(SequentialSubsetIterator):
     """
     Returns minibatches randomly, but sequential inside each minibatch.
@@ -648,6 +702,7 @@ _iteration_schemes = {
     'even_shuffled_sequential': as_even(ShuffledSequentialSubsetIterator),
     'even_batchwise_shuffled_sequential':
     as_even(BatchwiseShuffledSequentialIterator),
+    'balanced_random': BalancedRandomIterator,
 }
 
 
@@ -821,11 +876,15 @@ class FiniteDatasetIterator(object):
 
             self._convert[i] = fn
 
+            # set dataset if subset_iterator has set_dataset
+            if hasattr(self._subset_iterator, 'set_dataset'):
+                self._subset_iterator.set_dataset(self._dataset)
+
     def __iter__(self):
         return self
 
     @wraps(SubsetIterator.next)
-    def next(self):
+    def next(self, with_index=False):
         """
         Retrieves the next batch of examples.
 
@@ -852,7 +911,10 @@ class FiniteDatasetIterator(object):
             for data, fn in safe_izip(self._raw_data, self._convert))
         if not self._return_tuple and len(rval) == 1:
             rval, = rval
-        return rval
+        if with_index is False:  # For Debug
+            return rval
+        else:  # with_index is True
+            return rval, next_index
 
     def __next__(self):
         return self.next()

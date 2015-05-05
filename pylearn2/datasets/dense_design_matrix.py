@@ -263,7 +263,6 @@ class DenseDesignMatrix(Dataset):
     def iterator(self, mode=None, batch_size=None, num_batches=None,
                  rng=None, data_specs=None,
                  return_tuple=False):
-        print("Mode: %s" % (mode))
         if data_specs is None:
             data_specs = self._iter_data_specs
 

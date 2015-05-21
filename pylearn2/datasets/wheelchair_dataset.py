@@ -10,12 +10,9 @@ __license__ = "3-clause BSD"
 __maintainer__ = "?"
 __email__ = "zygmunt@fastml.com"
 
-import csv
 import numpy as np
-import os
 
 from pylearn2.datasets.dense_design_matrix import DenseDesignMatrix
-from pylearn2.utils import serial
 from pylearn2.utils.string_utils import preprocess
 
 
@@ -172,6 +169,5 @@ class Wheelchair2012(DenseDesignMatrix):
         # from pylearn2.format.target_format import OneHotFormatter
         # n_class = len(np.unique(y))
         # y = OneHotFormatter(
-        #     max_labels=n_class, dtype='int32').format(
-        #         y.reshape([len(y)]), mode='stack')
+        #     max_labels=n_class, dtype='int32').format(y.reshape([len(y)]))
         return X, y

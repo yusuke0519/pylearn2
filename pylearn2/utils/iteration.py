@@ -591,6 +591,7 @@ class BalancedRandomIterator(SubsetIterator):
 
     @wraps(SubsetIterator.next)
     def next(self):
+        # TODO: 多クラス分類に適用できるように
         if self._next_batch_no >= self._num_batches:
             raise StopIteration()
         else:

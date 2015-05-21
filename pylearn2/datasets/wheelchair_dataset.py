@@ -171,5 +171,7 @@ class Wheelchair2012(DenseDesignMatrix):
         y = y.astype('int32')
         # from pylearn2.format.target_format import OneHotFormatter
         # n_class = len(np.unique(y))
-        # y = OneHotFormatter(max_labels=n_class, dtype='int32').format(y.reshape([len(y)]))
+        # y = OneHotFormatter(
+        #     max_labels=n_class, dtype='int32').format(
+        #         y.reshape([len(y)]), mode='stack')
         return X, y

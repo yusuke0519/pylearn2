@@ -575,6 +575,116 @@ class RandomSliceSubsetIterator(RandomUniformSubsetIterator):
     uniform_batch_size = True
 
 
+import math
+# from sklearn.cross_validation import StratifiedShuffleSplit
+#
+# class BalancedRandomIterator(SubsetIterator):
+#     def __init__(self, dataset_size, batch_size, num_batches, rng=None):
+#         self._dataset_size = dataset_size
+#         self._batch_size = batch_size
+#         if num_batches is None:
+#             num_batches = int(math.ceil(float(dataset_size)/batch_size))
+#             # num_batches = int(dataset_size/batch_size)
+#         self._num_batches = num_batches
+#         self._next_batch_no = 0
+#
+#     @wraps(SubsetIterator.next)
+#     def next(self):
+#         if self._next_batch_no >= self._num_batches:
+#             raise StopIteration()
+#         # elif ((self._next_batch_no+1) * self._batch_size) > self._dataset_size:
+#         #     print("OK")
+#         #     test = self._dataset_size - (self._batch_size*self._next_batch_no)
+#         #     print(test)
+#         #     rval = self._index_list[self._next_batch_no]
+#         #     rval = rval[:test]
+#         #     self._next_batch_no += 1
+#         #     return rval
+#         else:
+#             rval = self._index_list[self._next_batch_no]
+#             self._next_batch_no += 1
+#             return rval
+#
+#     def __next__(self):
+#         return self.next()
+#
+#     def set_dataset(self, dataset):
+#         n_class = len(np.unique(dataset.y))
+#         n_max_batches = min([len(np.where(dataset.y==i)[0]) for i in range(n_class)])
+#         self._num_max_batches = n_max_batches
+#
+#         # print("num batches must be smaller than the least sample size of least class")
+#         assert n_max_batches >= self._num_batches
+#         self._dataset = dataset
+#         self.sss = StratifiedShuffleSplit(
+#             dataset.y.reshape(len(dataset.y)), n_iter=self._num_batches, test_size=self._batch_size)
+#         self._index_list = []
+#         for _, ind in self.sss:
+#             self._index_list.append(ind)
+#     fancy = True
+#     stochastic = True
+#     uniform_batch_size = True
+
+
+class BalancedRandomIterator(SubsetIterator):
+    def __init__(self, dataset_size, batch_size, num_batches, rng=None):
+        self._dataset_size = dataset_size
+        self._batch_size = batch_size
+        self._num_batches = None
+        self._next_batch_no = 0
+
+    @wraps(SubsetIterator.next)
+    def next(self):
+        if self._next_batch_no >= self._num_batches:
+            print('Done')
+            raise StopIteration()
+        else:
+            print('Iteration %d' % (self._next_batch_no))
+            rval = []
+            for i, (start, choise) in enumerate(zip(self.idx_of_class, self.idx_list_of_classes)):
+                _rval, next_start, next_choise = sequential_n_sample(choise, start, self.batch_size_of_class)
+                rval.append(_rval)
+                self.idx_of_class[i] = next_start
+                self.idx_list_of_classes[i] = next_choise
+            self._next_batch_no += 1
+            return np.concatenate(rval).astype('int64').tolist()
+
+    def __next__(self):
+        return self.next()
+
+    def set_dataset(self, dataset):
+        # set_dataset
+        self.n_class = len(np.unique(dataset.y))
+        self.idx_list_of_classes = [list(np.where(dataset.y==i)[0]) for i in range(self.n_class)]
+        self.idx_of_class = [0] * len(self.idx_list_of_classes)
+
+        assert (self._batch_size % self.n_class) == 0
+        self.batch_size_of_class = int(self._batch_size / self.n_class)
+        max_class_samples = max([len(np.where(dataset.y==i)[0]) for i in range(self.n_class)])
+        self._num_batches = int(math.ceil(max_class_samples)/self.batch_size_of_class)
+
+
+
+    fancy = True
+    stochastic = True
+    uniform_batch_size = True
+
+import random
+def sequential_n_sample(choise, start, l_sample):
+    if (len(choise)-start) >= l_sample:
+        return choise[start: (start+l_sample)], (start+l_sample), choise
+    else:
+        rval = []
+        rval.append(choise[start:])
+        n_requeired_samples = l_sample - len(choise[start:])
+        while n_requeired_samples!=0:
+            random.shuffle(choise)
+            _rval, start, choise = sequential_n_sample(choise, 0, n_requeired_samples)
+            rval.append(_rval)
+            n_requeired_samples -= len(_rval)
+        return list(np.concatenate(rval)), start, choise
+
+"""
 class BalancedRandomIterator(SubsetIterator):
     def __init__(self, dataset_size, batch_size, num_batches, rng=None):
         self._rng = make_np_rng(rng, which_method=["random_integers",
@@ -603,7 +713,7 @@ class BalancedRandomIterator(SubsetIterator):
             n = 0
             chice = np.arange(len(y))
             p_choice = chice[(y == p).reshape(len(y))]
-            p_max_size = len(p_choice)
+            # p_max_size = len(p_choice)
             n_choice = chice[(y == n).reshape(len(y))]
 
             import random
@@ -628,6 +738,7 @@ class BalancedRandomIterator(SubsetIterator):
     fancy = True
     stochastic = True
     uniform_batch_size = True
+"""
 
 
 class BatchwiseShuffledSequentialIterator(SequentialSubsetIterator):
@@ -833,7 +944,7 @@ class FiniteDatasetIterator(object):
 
         self._raw_data = tuple(all_data[dataset_source.index(s)]
                                for s in source)
-        self._source = source
+        # self._source = source
         self._space = sub_spaces
 
         if convert is None:
